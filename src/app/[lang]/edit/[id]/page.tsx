@@ -8,14 +8,15 @@ import { Language } from '../../../i18n/config';
 import CreateCardModal from '../../../components/CreateCardModal';
 import { useRouter } from 'next/navigation';
 
-interface EditPageProps {
+type Props = {
   params: {
     id: string;
     lang: Language;
   };
-}
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-export default function EditPage({ params }: EditPageProps) {
+export default function EditPage({ params, searchParams }: Props) {
   const { id, lang } = params;
   const { data: session, status } = useSession();
   const router = useRouter();
