@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useSession } from 'next-auth/react';
 import { getBusinessCard } from '../../../firebase/services';
 import { BusinessCard } from '../../../types/businessCard';
@@ -8,16 +8,16 @@ import { Language } from '../../../i18n/config';
 import CreateCardModal from '../../../components/CreateCardModal';
 import { useRouter } from 'next/navigation';
 
-type Props = {
-  params: {
+interface EditPageProps {
+  params: Promise<{
     id: string;
     lang: Language;
-  };
+  }>;
   searchParams: { [key: string]: string | string[] | undefined };
-};
+}
 
-export default function EditPage({ params, searchParams }: Props) {
-  const { id, lang } = params;
+export default function EditPage({ params, searchParams }: EditPageProps) {
+  const { id, lang } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
   const [card, setCard] = useState<BusinessCard | null>(null);
@@ -55,34 +55,29 @@ export default function EditPage({ params, searchParams }: Props) {
     };
 
     fetchCard();
-  }, [id, session, status, lang, router]);
-
-  const handleClose = () => {
-    router.push(`/${lang}/cards`);
-  };
+  }, [id, session, status, router, lang]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-red-500">{error}</div>
-      </div>
-    );
+    return <div>{error}</div>;
+  }
+
+  if (!card) {
+    return <div>Card not found</div>;
   }
 
   return (
-    <CreateCardModal
-      isOpen={true}
-      onClose={handleClose}
-      initialData={card}
-      mode="edit"
-    />
+    <div>
+      <CreateCardModal
+        isOpen={true}
+        onClose={() => router.push(`/${lang}/cards`)}
+        initialData={card}
+        isEditing={true}
+        lang={lang}
+      />
+    </div>
   );
 }
