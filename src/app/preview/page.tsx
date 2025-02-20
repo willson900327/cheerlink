@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FaEnvelope, FaPhone, FaGlobe, FaLinkedin, FaDownload } from 'react-icons/fa';
 import ColorThemeSelector from '../components/ColorThemeSelector';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { QRCodeSVG } from 'qrcode.react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -70,16 +70,18 @@ export default function PreviewPage() {
   };
 
   const handleDownload = async () => {
-    if (cardRef.current) {
-      try {
-        const canvas = await html2canvas(cardRef.current);
-        const link = document.createElement('a');
-        link.download = 'business-card.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } catch (error) {
-        console.error('Error downloading card:', error);
-      }
+    if (!cardRef.current) return;
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1.0,
+        pixelRatio: 2
+      });
+      const link = document.createElement('a');
+      link.download = `${cardData?.name}_business_card.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Error generating image:', error);
     }
   };
 

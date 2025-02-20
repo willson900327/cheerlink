@@ -6,7 +6,7 @@ import { BusinessCard } from '../types/businessCard';
 import { Language } from '../i18n/config';
 import Image from 'next/image';
 import { useState } from 'react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface BusinessCardWebsiteProps {
@@ -54,52 +54,40 @@ export default function BusinessCardWebsite({ card, lang }: BusinessCardWebsiteP
     setSelectedTemplate(templateId);
   };
 
-  const handlePreview = async (template: Template = selectedTemplate as Template) => {
+  const handlePreview = async () => {
     try {
-      setDownloading(true);
-      const element = document.getElementById(`preview-card-${template}`);
-      if (!element) return;
-
-      const size = 1200;
-      const canvas = await html2canvas(element, {
-        width: size,
-        height: size,
-        backgroundColor: template === 'dark' ? '#1a1a1a' : '#ffffff',
-        scale: 2,
-        useCORS: true,
-      });
-
-      const dataUrl = canvas.toDataURL('image/png');
-      setPreviewImage(dataUrl);
-      setShowPreview(true);
-      setShowTemplates(false);
+      const element = document.getElementById('business-card');
+      if (element) {
+        const dataUrl = await toPng(element, {
+          quality: 1.0,
+          pixelRatio: 2
+        });
+        setPreviewImage(dataUrl);
+        setShowPreview(true);
+      }
     } catch (error) {
       console.error('Error generating preview:', error);
-    } finally {
-      setDownloading(false);
     }
   };
 
   const handleDownload = async () => {
-    if (!selectedTemplate) return;
-    
+    setDownloading(true);
     try {
       const element = document.getElementById('business-card');
-      if (!element) return;
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: null,
-      });
-
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `${card.name}_business_card.png`;
-      link.href = dataUrl;
-      link.click();
+      if (element) {
+        const dataUrl = await toPng(element, {
+          quality: 1.0,
+          pixelRatio: 2
+        });
+        const link = document.createElement('a');
+        link.download = `${card.name}_business_card.png`;
+        link.href = dataUrl;
+        link.click();
+      }
     } catch (error) {
       console.error('Error generating image:', error);
     }
+    setDownloading(false);
   };
 
   const getCardUrl = () => {
