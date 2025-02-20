@@ -1,0 +1,102 @@
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Utilities */
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #171717;
+    --foreground: #ffffff;
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+/* Keyframe Animations */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-bg {
+  background: linear-gradient(45deg, #0d5cfa, #135df3, #2257a7);
+  background-size: 200% 200%;
+  animation: gradientAnimation 10s ease infinite;
+}
+
+.dark .animated-bg {
+  background: linear-gradient(45deg, #0a47c7, #0d5cfa, #1e4c8f);
+  background-size: 200% 200%;
+  animation: gradientAnimation 10s ease infinite;
+}
+
+/* Global Styles */
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Input Styles */
+/* 確保所有輸入框的文字是黑色 */
+input,
+textarea {
+  color: #000000 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6B7280;
+}
+
+/* Transform Styles */
+.perspective-1000 {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+/* Background Styles */
+.bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
