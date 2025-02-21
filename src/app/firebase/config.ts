@@ -1,3 +1,5 @@
+'use client';
+
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
@@ -13,17 +15,11 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// 初始化 Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+// Initialize Firebase only on client side
+const app = typeof window !== 'undefined' ? (!getApps().length ? initializeApp(firebaseConfig) : getApps()[0]) : null;
 
-const db = getFirestore(app);
-const storage = getStorage(app);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-
-export { app, db, storage, auth, googleProvider };
+// Initialize services
+export const db = typeof window !== 'undefined' ? getFirestore(app) : null;
+export const auth = typeof window !== 'undefined' ? getAuth(app) : null;
+export const storage = typeof window !== 'undefined' ? getStorage(app) : null;
+export const googleProvider = new GoogleAuthProvider();
