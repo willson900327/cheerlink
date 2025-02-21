@@ -1,3 +1,5 @@
+'use client';
+
 import { collection, addDoc, getDoc, getDocs, query, where, doc, updateDoc, deleteDoc, FirestoreError } from 'firebase/firestore';
 import { db } from './config';
 import { BusinessCard } from '../types/businessCard';
@@ -7,6 +9,8 @@ const CARDS_COLLECTION = 'businessCards';
 
 // 保存名片
 export async function saveBusinessCard(cardData: BusinessCard) {
+  if (!db) throw new Error('Firebase is not initialized');
+  
   try {
     const session = await getSession();
     if (!session?.user?.email) {
@@ -36,6 +40,8 @@ export async function saveBusinessCard(cardData: BusinessCard) {
 
 // 獲取用戶的所有名片
 export async function getUserBusinessCards(userEmail: string) {
+  if (!db) throw new Error('Firebase is not initialized');
+  
   try {
     if (!userEmail) {
       throw new Error('User email is required');
@@ -51,24 +57,26 @@ export async function getUserBusinessCards(userEmail: string) {
     } as BusinessCard));
   } catch (error) {
     console.error('Error getting user business cards:', error);
-    throw new Error(error instanceof Error ? error.message : 'An unknown error occurred');
+    throw error;
   }
 }
 
 // 獲取名片
 export async function getBusinessCard(id: string) {
+  if (!db) throw new Error('Firebase is not initialized');
+  
   try {
     const docRef = doc(db, CARDS_COLLECTION, id);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
-      throw new Error('Card not found');
+      return null;
     }
     
     return {
-      ...docSnap.data() as BusinessCard,
       id: docSnap.id,
-    };
+      ...docSnap.data()
+    } as BusinessCard;
   } catch (error) {
     console.error('Error getting business card:', error);
     throw error;
@@ -77,34 +85,37 @@ export async function getBusinessCard(id: string) {
 
 // 更新名片
 export async function updateBusinessCard(cardId: string, cardData: Partial<BusinessCard>) {
+  if (!db) throw new Error('Firebase is not initialized');
+  
   try {
     const session = await getSession();
     if (!session?.user?.email) {
-      throw new Error('Please sign in to update the business card');
+      throw new Error('Please sign in to update a business card');
     }
 
-    const cardRef = doc(db, CARDS_COLLECTION, cardId);
-    const cardDoc = await getDoc(cardRef);
-
-    if (!cardDoc.exists()) {
+    const docRef = doc(db, CARDS_COLLECTION, cardId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
       throw new Error('Card not found');
     }
-
-    // 檢查是否是名片的擁有者
-    if (cardDoc.data().userId !== session.user.email) {
+    
+    const existingCard = docSnap.data();
+    if (existingCard.userId !== session.user.email) {
       throw new Error('You do not have permission to update this card');
     }
 
-    await updateDoc(cardRef, {
+    await updateDoc(docRef, {
       ...cardData,
       updatedAt: new Date().toISOString(),
     });
 
     return {
       id: cardId,
+      ...existingCard,
       ...cardData,
-      userId: session.user.email,
-    };
+      updatedAt: new Date().toISOString(),
+    } as BusinessCard;
   } catch (error) {
     console.error('Error updating business card:', error);
     throw error;
@@ -113,25 +124,27 @@ export async function updateBusinessCard(cardId: string, cardData: Partial<Busin
 
 // 刪除名片
 export async function deleteBusinessCard(cardId: string) {
+  if (!db) throw new Error('Firebase is not initialized');
+  
   try {
     const session = await getSession();
     if (!session?.user?.email) {
-      throw new Error('Please sign in to delete the business card');
+      throw new Error('Please sign in to delete a business card');
     }
 
-    const cardRef = doc(db, CARDS_COLLECTION, cardId);
-    const cardDoc = await getDoc(cardRef);
-
-    if (!cardDoc.exists()) {
+    const docRef = doc(db, CARDS_COLLECTION, cardId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
       throw new Error('Card not found');
     }
-
-    // 檢查是否是名片的擁有者
-    if (cardDoc.data().userId !== session.user.email) {
+    
+    const card = docSnap.data();
+    if (card.userId !== session.user.email) {
       throw new Error('You do not have permission to delete this card');
     }
 
-    await deleteDoc(cardRef);
+    await deleteDoc(docRef);
     return true;
   } catch (error) {
     console.error('Error deleting business card:', error);
