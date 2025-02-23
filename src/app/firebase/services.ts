@@ -17,11 +17,22 @@ export async function saveBusinessCard(cardData: BusinessCard) {
       throw new Error('Please sign in to create a business card');
     }
 
+    // 確保有 language 字段
+    if (!cardData.language) {
+      const pathname = window.location.pathname;
+      cardData.language = pathname.split('/')[1] === 'en' ? 'en' : 'zh';
+    }
+
     const docRef = await addDoc(collection(db, CARDS_COLLECTION), {
       ...cardData,
       userId: session.user.email,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+    });
+
+    // 更新文件，將其 ID 設置為卡片的 ID
+    await updateDoc(docRef, {
+      id: docRef.id
     });
 
     return {
@@ -83,6 +94,20 @@ export async function getBusinessCard(id: string) {
   }
 }
 
+// 獲取名片
+export async function getBusinessCards(userId: string) {
+  if (!db) throw new Error('Firebase is not initialized');
+
+  try {
+    const q = query(collection(db, CARDS_COLLECTION), where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as BusinessCard);
+  } catch (error) {
+    console.error('Error getting business cards:', error);
+    throw error;
+  }
+}
+
 // 更新名片
 export async function updateBusinessCard(cardId: string, cardData: Partial<BusinessCard>) {
   if (!db) throw new Error('Firebase is not initialized');
@@ -105,16 +130,18 @@ export async function updateBusinessCard(cardId: string, cardData: Partial<Busin
       throw new Error('You do not have permission to update this card');
     }
 
-    await updateDoc(docRef, {
+    // 更新時保留 ID
+    const updateData = {
       ...cardData,
+      id: cardId,
       updatedAt: new Date().toISOString(),
-    });
+    };
+
+    await updateDoc(docRef, updateData);
 
     return {
-      id: cardId,
       ...existingCard,
-      ...cardData,
-      updatedAt: new Date().toISOString(),
+      ...updateData,
     } as BusinessCard;
   } catch (error) {
     console.error('Error updating business card:', error);

@@ -3,35 +3,50 @@
 import { useEffect, useState } from 'react';
 import { getBusinessCard } from '../../../firebase/services';
 import { BusinessCard } from '../../../types/businessCard';
-import { use } from 'react';
 import { Language } from '../../../i18n/config';
 import BusinessCardWebsite from '../../../components/BusinessCardWebsite';
 
 interface WebsitePageProps {
-  params: Promise<{
+  params: {
     id: string;
     lang: Language;
-  }>;
+  };
 }
 
 export default function WebsitePage({ params }: WebsitePageProps) {
-  const { id, lang } = use(params);
+  const { id, lang } = params;
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchCard() {
-      try {
-        const cardData = await getBusinessCard(id);
-        setCard(cardData);
-      } catch (error) {
-        console.error('Error fetching card:', error);
+    function fetchCard() {
+      if (!id) {
+        const baseUrl = window.location.origin;
+        window.location.href = `${baseUrl}/${lang}/cards`;
+        return;
       }
-      setLoading(false);
+
+      getBusinessCard(id)
+        .then((cardData) => {
+          if (!cardData) {
+            const baseUrl = window.location.origin;
+            window.location.href = `${baseUrl}/${lang}/cards`;
+            return;
+          }
+          setCard(cardData);
+        })
+        .catch((error) => {
+          console.error('Error fetching card:', error);
+          const baseUrl = window.location.origin;
+          window.location.href = `${baseUrl}/${lang}/cards`;
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
 
     fetchCard();
-  }, [id]);
+  }, [id, lang]);
 
   if (loading) {
     return (
@@ -50,9 +65,9 @@ export default function WebsitePage({ params }: WebsitePageProps) {
               {lang === 'en' ? 'Card not found' : '找不到名片'}
             </h1>
             <p className="mt-4 text-xl text-gray-500">
-              {lang === 'en'
+              {lang === 'en' 
                 ? 'The business card you are looking for does not exist.'
-                : '您要找的名片不存在。'
+                : '您要查看的名片不存在。'
               }
             </p>
           </div>

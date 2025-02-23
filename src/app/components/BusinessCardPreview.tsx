@@ -15,7 +15,7 @@ export default function BusinessCardPreview({ card }: BusinessCardPreviewProps) 
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <Link href={`/card/${card.id}`}>
+    <Link href={`/${card.language}/website/${card.id}`}>
       <motion.div
         className="relative w-full aspect-[1.618/1] rounded-2xl overflow-hidden shadow-lg cursor-pointer bg-white"
         onHoverStart={() => setIsHovered(true)}

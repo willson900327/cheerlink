@@ -1,70 +1,174 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getBusinessCard } from '../../../firebase/services';
-import { BusinessCard } from '../../../types/businessCard';
-import { use } from 'react';
-import { Language } from '../../../i18n/config';
-import BusinessCardPreview from '../../../components/BusinessCardPreview';
+import { usePathname } from 'next/navigation';
+import { BusinessCard } from '@/app/types/types';
+import { getBusinessCardById } from '@/app/firebase/services';
+import ShareButtons from '@/app/components/ShareButtons';
 
 interface PreviewPageProps {
-  params: Promise<{
+  params: {
     id: string;
-    lang: Language;
-  }>;
+    lang: string;
+  };
 }
 
+const translations = {
+  en: {
+    loading: 'Loading...',
+    error: 'Error loading business card',
+    notFound: 'Business card not found',
+    contact: 'Contact Information',
+    share: 'Share this Card'
+  },
+  zh: {
+    loading: '載入中...',
+    error: '載入名片時發生錯誤',
+    notFound: '找不到名片',
+    contact: '聯絡資訊',
+    share: '分享此名片'
+  }
+};
+
 export default function PreviewPage({ params }: PreviewPageProps) {
-  const { id, lang } = use(params);
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const pathname = usePathname();
+  const lang = pathname.split('/')[1] === 'en' ? 'en' : 'zh';
+  const t = translations[lang];
 
   useEffect(() => {
-    async function fetchCard() {
+    const loadCard = async () => {
       try {
-        const cardData = await getBusinessCard(id);
-        setCard(cardData);
-      } catch (error) {
-        console.error('Error fetching card:', error);
+        const data = await getBusinessCardById(params.id);
+        if (data) {
+          setCard(data);
+        } else {
+          setError(t.notFound);
+        }
+      } catch (err) {
+        console.error('Error loading card:', err);
+        setError(t.error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }
+    };
 
-    fetchCard();
-  }, [id]);
+    loadCard();
+  }, [params.id, t.error, t.notFound]);
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-sky-500"></div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  if (!card) {
+  if (error || !card) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-extrabold text-gray-900">
-              {lang === 'en' ? 'Card not found' : '找不到名片'}
-            </h1>
-            <p className="mt-4 text-gray-500">
-              {lang === 'en'
-                ? 'The card you are looking for does not exist.'
-                : '您要找的名片不存在。'
-              }
-            </p>
-          </div>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-600">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <BusinessCardPreview card={card} />
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Card Preview */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* Background Image */}
+        {card.backgroundImage && (
+          <div className="h-48 w-full relative">
+            <img
+              src={card.backgroundImage}
+              alt="Background"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        <div className="p-6">
+          <div className="flex items-center space-x-4">
+            {/* Avatar */}
+            {card.avatarImage && (
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <img
+                  src={card.avatarImage}
+                  alt={card.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Basic Info */}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{card.name}</h1>
+              <p className="text-lg text-gray-600">{card.title}</p>
+              <p className="text-gray-600">{card.company}</p>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t.contact}</h2>
+            <div className="space-y-3">
+              {card.email && (
+                <p className="flex items-center text-gray-600">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  <a href={`mailto:${card.email}`} className="hover:text-sky-600">{card.email}</a>
+                </p>
+              )}
+              {card.phone && (
+                <p className="flex items-center text-gray-600">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                  <a href={`tel:${card.phone}`} className="hover:text-sky-600">{card.phone}</a>
+                </p>
+              )}
+              {card.website && (
+                <p className="flex items-center text-gray-600">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                  </svg>
+                  <a href={card.website} target="_blank" rel="noopener noreferrer" className="hover:text-sky-600">
+                    {card.website}
+                  </a>
+                </p>
+              )}
+              {card.address && (
+                <p className="flex items-center text-gray-600">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  {card.address}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          {card.description && (
+            <div className="mt-6">
+              <p className="text-gray-600 whitespace-pre-wrap">{card.description}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Share Section */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">{t.share}</h2>
+        <ShareButtons
+          cardId={params.id}
+          title={`${card.name} - ${card.title}`}
+          description={card.description}
+        />
       </div>
     </div>
   );

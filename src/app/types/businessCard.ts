@@ -17,4 +17,5 @@ export interface BusinessCard {
   imageUrl?: string;
   avatar?: string;
   website?: string;
+  language: 'en' | 'zh';
 }

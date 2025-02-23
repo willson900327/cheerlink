@@ -51,74 +51,69 @@ export default function Navbar() {
     }
   };
 
-  const t = translations[lang];
-
-  const handleCreateCard = () => {
-    setIsCreateModalOpen(true);
-  };
+  const t = translations[lang as keyof typeof translations];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            <Link href={`/${lang}`} className="flex items-center px-4">
-              <Image src="/images/logo.png" alt="Logo" width={32} height={32} className="w-8 h-8" />
-              <span className="ml-2 text-xl font-bold text-gray-900">CheerLink</span>
-            </Link>
-            <div className="hidden sm:flex sm:space-x-4 sm:ml-6 sm:items-center">
-              <Link href={`/${lang}`} className="px-3 py-2 text-gray-700 hover:text-gray-900">
-                {t.home}
-              </Link>
-              <Link href={`/${lang}/cards`} className="px-3 py-2 text-gray-700 hover:text-gray-900">
-                {t.cards}
-              </Link>
-              <Link href={`/${lang}/about`} className="px-3 py-2 text-gray-700 hover:text-gray-900">
-                {t.about}
-              </Link>
-              <div className="relative group">
-                <button className="px-3 py-2 text-gray-700 hover:text-gray-900">
-                  {t.help}
-                </button>
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link href={`/${lang}/help`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    {t.help}
-                  </Link>
-                  <Link href={`/${lang}/faq`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    {t.faq}
-                  </Link>
-                  <Link href={`/${lang}/guide`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    {t.guide}
-                  </Link>
-                </div>
-              </div>
-              <Link href={`/${lang}/contact`} className="px-3 py-2 text-gray-700 hover:text-gray-900">
-                {t.contact}
+            <div className="flex-shrink-0 flex items-center">
+              <Link href={`/${lang}`} className="flex items-center">
+                <Image
+                  src="/images/logo.png"
+                  alt="Digital Card Logo"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 mr-2"
+                />
+                <span className="text-xl font-bold text-gray-800">
+                  Digital Card
+                </span>
               </Link>
             </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link
+                href={`/${lang}`}
+                className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                  pathname === `/${lang}` ? 'text-sky-600 border-b-2 border-sky-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t.home}
+              </Link>
+              {session && (
+                <Link
+                  href={`/${lang}/cards`}
+                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                    pathname === `/${lang}/cards` ? 'text-sky-600 border-b-2 border-sky-600' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {t.cards}
+                </Link>
+              )}
+            </div>
           </div>
-
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
             {session ? (
-              <>
+              <div className="flex items-center space-x-4">
                 <button
-                  onClick={handleCreateCard}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700"
                 >
                   {t.createCard}
                 </button>
                 <button
                   onClick={() => signOut()}
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2"
+                  className="text-sm font-medium text-gray-500 hover:text-gray-700"
                 >
                   {t.logout}
                 </button>
-              </>
+              </div>
             ) : (
               <button
                 onClick={() => signIn()}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700"
               >
                 {t.login}
               </button>
@@ -126,11 +121,13 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-
-      <CreateCardModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
+      {isCreateModalOpen && (
+        <CreateCardModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          mode="create"
+        />
+      )}
     </nav>
   );
 }
