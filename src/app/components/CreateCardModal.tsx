@@ -38,7 +38,7 @@ const translations = {
     uploadImage: 'Upload Image',
     change: 'Change',
     errorProcessingImage: 'Error processing image',
-    redirecting: 'Redirecting to your card preview...'
+    redirecting: 'Redirecting to your business card...'
   },
   zh: {
     title: '創建名片',
@@ -64,7 +64,7 @@ const translations = {
     uploadImage: '上傳圖片',
     change: '更改',
     errorProcessingImage: '處理圖片時出錯',
-    redirecting: '正在跳轉到您的名片預覽...'
+    redirecting: '正在跳轉到您的名片...'
   }
 };
 
@@ -222,7 +222,7 @@ export default function CreateCardModal({
         cardId = await saveBusinessCard(formData);
       }
       onClose();
-      router.push(`/${lang}/preview/${cardId}`);
+      router.push(`/${lang}/website/${cardId}`);
     } catch (error) {
       console.error('Error saving business card:', error);
       alert(t.error);

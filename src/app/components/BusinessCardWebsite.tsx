@@ -595,14 +595,15 @@ export default function BusinessCardWebsite({ card, lang }: BusinessCardWebsiteP
       >
         <button
           onClick={handleCopyLink}
-          className="flex items-center space-x-2 px-6 py-3 bg-sky-600 text-white rounded-full shadow-lg hover:bg-sky-700 transition-colors"
+          className="flex items-center space-x-2 px-6 py-3 bg-white text-gray-700 rounded-lg shadow-lg hover:bg-gray-50 transition-colors"
         >
-          {linkCopied ? <FaCheck /> : <FaCopy />}
+          {linkCopied ? <FaCheck className="text-green-500" /> : <FaCopy />}
           <span>{linkCopied ? t.linkCopied : t.copyLink}</span>
         </button>
+
         <button
           onClick={() => setShowLayoutModal(true)}
-          className="flex items-center space-x-2 px-6 py-3 bg-sky-600 text-white rounded-full shadow-lg hover:bg-sky-700 transition-colors"
+          className="flex items-center space-x-2 px-6 py-3 bg-sky-600 text-white rounded-lg shadow-lg hover:bg-sky-700 transition-colors"
         >
           <FaDownload />
           <span>{t.download}</span>

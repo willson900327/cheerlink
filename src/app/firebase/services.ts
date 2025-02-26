@@ -13,9 +13,6 @@ export async function saveBusinessCard(cardData: BusinessCard) {
   
   try {
     const session = await getSession();
-    if (!session?.user?.email) {
-      throw new Error('Please sign in to create a business card');
-    }
 
     // 確保有 language 字段
     if (!cardData.language) {
@@ -23,23 +20,37 @@ export async function saveBusinessCard(cardData: BusinessCard) {
       cardData.language = pathname.split('/')[1] === 'en' ? 'en' : 'zh';
     }
 
-    const docRef = await addDoc(collection(db, CARDS_COLLECTION), {
+    // 如果用戶已登入，保存到 Firebase
+    if (session?.user?.email) {
+      const docRef = await addDoc(collection(db, CARDS_COLLECTION), {
+        ...cardData,
+        userId: session.user.email,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // 更新文件，將其 ID 設置為卡片的 ID
+      await updateDoc(docRef, {
+        id: docRef.id
+      });
+
+      return docRef.id;
+    }
+    
+    // 如果用戶未登入，保存到 localStorage
+    const savedCards = localStorage.getItem('tempBusinessCards');
+    const existingCards = savedCards ? JSON.parse(savedCards) : [];
+    const tempId = `temp_${Date.now()}`;
+    const newCard = {
       ...cardData,
-      userId: session.user.email,
+      id: tempId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
-
-    // 更新文件，將其 ID 設置為卡片的 ID
-    await updateDoc(docRef, {
-      id: docRef.id
-    });
-
-    return {
-      ...cardData,
-      id: docRef.id,
-      userId: session.user.email,
     };
+    const updatedCards = [...existingCards, newCard];
+    localStorage.setItem('tempBusinessCards', JSON.stringify(updatedCards));
+    return tempId;
+
   } catch (error) {
     console.error('Error saving business card:', error);
     if (error instanceof FirestoreError && error.code === 'permission-denied') {
@@ -77,6 +88,17 @@ export async function getBusinessCard(id: string) {
   if (!db) throw new Error('Firebase is not initialized');
   
   try {
+    // 先從 localStorage 查找
+    const savedCards = localStorage.getItem('tempBusinessCards');
+    if (savedCards) {
+      const cards = JSON.parse(savedCards);
+      const localCard = cards.find((c: BusinessCard) => c.id === id);
+      if (localCard) {
+        return localCard;
+      }
+    }
+
+    // 如果在 localStorage 中找不到，則從 Firebase 查找
     const docRef = doc(db, CARDS_COLLECTION, id);
     const docSnap = await getDoc(docRef);
     

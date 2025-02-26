@@ -81,16 +81,14 @@ export default function Navbar() {
               >
                 {t.home}
               </Link>
-              {session && (
-                <Link
-                  href={`/${lang}/cards`}
-                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-                    pathname === `/${lang}/cards` ? 'text-sky-600 border-b-2 border-sky-600' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {t.cards}
-                </Link>
-              )}
+              <Link
+                href={`/${lang}/cards`}
+                className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                  pathname === `/${lang}/cards` ? 'text-sky-600 border-b-2 border-sky-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t.cards}
+              </Link>
             </div>
           </div>
           <div className="flex items-center space-x-4">

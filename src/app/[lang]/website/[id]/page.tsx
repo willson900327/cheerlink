@@ -5,6 +5,7 @@ import { getBusinessCard } from '../../../firebase/services';
 import { BusinessCard } from '../../../types/businessCard';
 import { Language } from '../../../i18n/config';
 import BusinessCardWebsite from '../../../components/BusinessCardWebsite';
+import { useSession } from 'next-auth/react';
 
 interface WebsitePageProps {
   params: {
@@ -15,38 +16,56 @@ interface WebsitePageProps {
 
 export default function WebsitePage({ params }: WebsitePageProps) {
   const { id, lang } = params;
+  const { data: session } = useSession();
   const [card, setCard] = useState<BusinessCard | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    function fetchCard() {
+    async function fetchCard() {
       if (!id) {
         const baseUrl = window.location.origin;
         window.location.href = `${baseUrl}/${lang}/cards`;
         return;
       }
 
-      getBusinessCard(id)
-        .then((cardData) => {
+      try {
+        if (session?.user?.email) {
+          // 登入用戶：從 Firebase 獲取名片
+          const cardData = await getBusinessCard(id);
           if (!cardData) {
             const baseUrl = window.location.origin;
             window.location.href = `${baseUrl}/${lang}/cards`;
             return;
           }
           setCard(cardData);
-        })
-        .catch((error) => {
-          console.error('Error fetching card:', error);
-          const baseUrl = window.location.origin;
-          window.location.href = `${baseUrl}/${lang}/cards`;
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+        } else {
+          // 未登入用戶：從 localStorage 獲取名片
+          const savedCards = localStorage.getItem('tempBusinessCards');
+          if (savedCards) {
+            const cards = JSON.parse(savedCards);
+            const foundCard = cards.find((c: BusinessCard) => c.id === id);
+            if (foundCard) {
+              setCard(foundCard);
+            } else {
+              const baseUrl = window.location.origin;
+              window.location.href = `${baseUrl}/${lang}/cards`;
+            }
+          } else {
+            const baseUrl = window.location.origin;
+            window.location.href = `${baseUrl}/${lang}/cards`;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching card:', error);
+        const baseUrl = window.location.origin;
+        window.location.href = `${baseUrl}/${lang}/cards`;
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchCard();
-  }, [id, lang]);
+  }, [id, lang, session]);
 
   if (loading) {
     return (
